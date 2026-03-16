@@ -1,0 +1,17 @@
+export const images = {
+  add: require("./add.png"),
+  approved: require("./approved.png"),
+  bgnonlogin: require("./bgnonlogin.png"),
+  blank: require("./blank.png"),
+  calendar: require("./calendar.png"),
+  check: require("./check.png"),
+  chevron_down: require("./chevron-down.png"),
+  chevron_left: require("./chevron-left.png"),
+  close: require("./close.png"),
+  delete: require("./delete.png"),
+  edit: require("./edit.png"),
+  eye_off: require("./eye-off.png"),
+  eye: require("./eye.png"),
+  logo: require("./logo.png"),
+  map_bg: require("./map_bg.jpg"),
+};
