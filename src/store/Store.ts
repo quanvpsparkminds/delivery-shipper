@@ -12,9 +12,13 @@ import {
 import { reduxStorage } from "utils";
 import { createLogger } from "redux-logger";
 import AuthSlice, { authSliceKey } from "./slices/AuthSlice";
+import GeneralSlice, { generalSliceKey } from "./slices/GeneralSlice";
 
 const logger = createLogger({});
-const rootReducer = combineReducers({ auth: AuthSlice });
+const rootReducer = combineReducers({
+  auth: AuthSlice,
+  [generalSliceKey]: GeneralSlice,
+});
 
 const persistedReducer = persistReducer(
   {

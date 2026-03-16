@@ -4,14 +4,18 @@ import { api } from "services";
 import { RootState } from "store/Store";
 import { reduxSecureStorage, secureStorage, StorageKeys } from "utils";
 
+import { Shipper } from "types";
+
 export const authSliceKey = "auth";
 
 type AuthState = {
   token: string;
+  user: Shipper | null;
 };
 
 const initialState: AuthState = {
   token: "",
+  user: null,
 };
 
 export const authSlice = createSlice({
@@ -29,17 +33,22 @@ export const authSlice = createSlice({
     },
     signOut: (state) => {
       state.token = "";
+      state.user = null;
       // Clear secure storage
       secureStorage.removeItem(StorageKeys.token);
       // Clear API tokens
       api.ejectTokens();
     },
+    setUser: (state, action: PayloadAction<Shipper>) => {
+      state.user = action.payload;
+    },
   },
 });
 
-export const { signIn, signOut } = authSlice.actions;
+export const { signIn, signOut, setUser } = authSlice.actions;
 
 export const selectIsSignedIn = (state: RootState) => Boolean(state.auth.token);
+export const selectUser = (state: RootState) => state.auth.user;
 
 // Configure Redux-persist
 export default persistReducer<AuthState>(

@@ -15,7 +15,7 @@ import * as AxiosLogger from "axios-logger";
 const DEFAULT_TIMEOUT = 100000;
 
 const config: CreateAxiosDefaults = {
-  baseURL: __DEV__ ? "http://localhost:8080/api" : Config.BASE_URL,
+  baseURL: `${Config.BASE_URL}/api/`,
   timeout: DEFAULT_TIMEOUT,
   headers: {
     "Content-Type": "application/json",

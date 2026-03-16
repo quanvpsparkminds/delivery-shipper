@@ -18,3 +18,22 @@ export const signupSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type SignUpFormValues = z.infer<typeof signupSchema>;
+
+export type Shipper = {
+  address: string | null;
+  avatar: string | null;
+  birthday: string | null;
+  cityId: number | null;
+  countryId: number | null;
+  currentLat: number | null;
+  currentLng: number | null;
+  email: string;
+  firstName: string;
+  id: number;
+  lastName: string;
+  onboarding: boolean;
+  phoneCode: string;
+  phoneNumber: string;
+  postCode: string | null;
+  status: "ACTIVE" | "INACTIVE";
+};

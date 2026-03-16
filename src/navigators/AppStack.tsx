@@ -21,12 +21,18 @@ import {
   OrderScreen,
   ProfileScreen,
   RevenueScreen,
+  FetchingDataScreen,
+  OrderDetailScreen,
 } from "screens";
-import { selectIsSignedIn } from "store";
+import { selectIsSignedIn, selectUser } from "store";
+import { DeliveryOrder } from "types";
 import { isAndroid } from "utils";
 
 const useIsSignedIn = () => useAppSelector(selectIsSignedIn);
 const useIsSignedOut = () => !useAppSelector(selectIsSignedIn);
+const useIsUserAvailable = () => Boolean(useAppSelector(selectUser));
+const useIsUserNotAvailable = () => !useAppSelector(selectUser);
+
 const MainTabs = createBottomTabNavigator({
   screens: {
     OrderTab: {
@@ -75,7 +81,15 @@ export const AppStack = createNativeStackNavigator({
     SignedIn: {
       if: useIsSignedIn,
       screens: {
+        FetchingData: {
+          if: useIsUserNotAvailable,
+          screen: FetchingDataScreen,
+          options: {
+            headerShown: false,
+          },
+        },
         Home: {
+          if: useIsUserAvailable,
           screen: MainTabs,
           options: {
             headerShown: false,
@@ -92,6 +106,12 @@ export const AppStack = createNativeStackNavigator({
   },
   screens: {
     Language: LanguageScreen,
+    OrderDetail: {
+      screen: OrderDetailScreen,
+      options: {
+        headerShown: false,
+      },
+    },
   },
 });
 

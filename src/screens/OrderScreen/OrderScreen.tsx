@@ -1,114 +1,132 @@
-import { images } from "@assets/index";
-import { AppText } from "components";
+import { useAppNavigation } from "@navigators/AppStack";
+import Geolocation from "@react-native-community/geolocation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useOrders, useUpdateOrderStatus } from "hooks";
 import React, { useEffect, useState } from "react";
-import {
-  DimensionValue,
-  ImageBackground,
-  StyleSheet,
-  View,
-} from "react-native";
+import { DimensionValue, StyleSheet, View } from "react-native";
+import MapView, { Marker, Region } from "react-native-maps";
 import {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { spacing, style } from "theme";
-import {
-  OrderActions,
-  OrderRouteDetails,
-  OrderStatusToggle,
-} from "./components";
+import { style } from "theme";
+import { OrderCard, OrderStatusToggle } from "./components";
+
+const INITIAL_REGION: Region = {
+  latitude: 10.762622,
+  longitude: 106.660172,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
+};
 
 export const OrderScreen = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useAppNavigation();
   const [isAccepted, setIsAccepted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [region, setRegion] = useState<Region>(INITIAL_REGION);
+  const { data: orders = [] } = useOrders();
   const countdownWidth = useSharedValue(100);
+
+  const activeOrder = orders.length > 0 ? orders[0] : null;
 
   useEffect(() => {
     countdownWidth.value = withTiming(0, { duration: 45000 });
+
+    Geolocation.getCurrentPosition(
+      (position) => {
+        const newRegion = {
+          ...INITIAL_REGION,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
+        };
+        setRegion(newRegion);
+      },
+      (error) => console.log("Geolocation Error: ", error),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
   }, []);
 
   const animatedCountdownStyle = useAnimatedStyle(() => ({
     width: `${countdownWidth.value}%` as DimensionValue,
   }));
 
+  const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
+  const queryClient = useQueryClient();
+
   const handleAccept = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setIsAccepted(true);
-    }, 1500);
+    if (!activeOrder) return;
+    updateStatus(
+      { id: activeOrder.id, status: "CONFIRMED" },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["orders"] });
+          setIsAccepted(true);
+        },
+      }
+    );
   };
 
   const handleReject = () => {
     // handle rejection logic
   };
 
+  const handleViewDetails = () => {
+    if (activeOrder) {
+      navigation.navigate("OrderDetail", { order: activeOrder });
+    }
+  };
+
   return (
     <View style={style.flex_1}>
-      {/* Map Background fills the whole screen */}
-      <ImageBackground
-        source={images.map_bg}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
+      {/* Map Background */}
+      <MapView style={StyleSheet.absoluteFillObject} region={region}>
+        {activeOrder && (
+          <Marker
+            coordinate={{
+              latitude: parseFloat(activeOrder.lat),
+              longitude: parseFloat(activeOrder.lng),
+            }}
+            title={activeOrder.restaurantName}
+            pinColor="green"
+          />
+        )}
+        <Marker
+          coordinate={{
+            latitude: region.latitude,
+            longitude: region.longitude,
+          }}
+          title="Vị trí của bạn"
+        />
+      </MapView>
+
+      {/* Status Toggle — top right */}
+      <View
+        style={[
+          style.abs,
+          style.row,
+          style.justify_end,
+          styles.topControlsBar,
+          { top: insets.top || 48 },
+        ]}
       >
-        {/* Status Toggle — top right */}
-        <View
-          style={[
-            style.abs,
-            style.row,
-            style.justify_end,
-            styles.topControlsBar,
-            { top: insets.top || 48 },
-          ]}
-        >
-          <OrderStatusToggle />
-        </View>
-      </ImageBackground>
-
-      {/* Floating Order Card — pinned to bottom */}
-      <View style={[style.justify_end, style.flex_1]}>
-        <View style={[styles.cardContainer, { paddingBottom: spacing.sm }]}>
-          <View style={styles.card}>
-            {/* Header: order type + income */}
-            <View
-              style={[style.row_between, style.align_end, styles.headerRow]}
-            >
-              <View>
-                <View style={styles.typeBadge}>
-                  <AppText style={styles.typeBadgeText}>
-                    Giao Đồ Ăn (Food)
-                  </AppText>
-                </View>
-                <AppText style={styles.titleText}>Đơn hàng mới!</AppText>
-              </View>
-              <View style={style.align_end}>
-                <AppText style={styles.incomeLabel}>Thu nhập</AppText>
-                <AppText style={styles.incomeValue}>30.000đ</AppText>
-              </View>
-            </View>
-
-            {/* Route + Metrics */}
-            <OrderRouteDetails
-              pickup="Cửa hàng Bánh Mì PewPew - Quận 1"
-              dropoff="123 Đường Lê Lợi, Phường Bến Thành"
-              distance="5.0 km"
-              estimatedTime="15 phút"
-            />
-
-            {/* Actions + Countdown */}
-            <OrderActions
-              isAccepted={isAccepted}
-              loading={loading}
-              animatedCountdownStyle={animatedCountdownStyle}
-              onAccept={handleAccept}
-              onReject={handleReject}
-            />
-          </View>
-        </View>
+        <OrderStatusToggle />
       </View>
+
+      {activeOrder && (
+        <OrderCard
+          order={activeOrder}
+          isAccepted={isAccepted || activeOrder.status === "CONFIRMED"}
+          loading={isUpdating}
+          animatedCountdownStyle={animatedCountdownStyle}
+          onAccept={handleAccept}
+          onReject={handleReject}
+          onViewDetails={handleViewDetails}
+        />
+      )}
     </View>
   );
 };

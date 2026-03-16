@@ -5,3 +5,5 @@ export * from "./OrderScreen";
 export * from "./HistoryScreen";
 export * from "./RevenueScreen";
 export * from "./ProfileScreen";
+export * from "./OrderDetailScreen/OrderDetailScreen";
+export * from "./FetchingDataScreen/FetchingDataScreen";
