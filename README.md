@@ -13,4 +13,4 @@ npx icon-set-creator create assets/logo.png
 # To rename app
 
 - on /android/app/build.gradle, change applicationId to "com.example"
-  npx react-native-rename "Plate" --skipGitStatusCheck
+  npx react-native-rename "Shipper" --skipGitStatusCheck

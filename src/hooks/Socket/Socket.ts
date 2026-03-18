@@ -1,5 +1,6 @@
 import Geolocation from "@react-native-community/geolocation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useOrders } from "hooks/Query";
 import { useAppSelector } from "hooks/RTK";
 import { useEffect, useState } from "react";
 import SockJS from "sockjs-client";
@@ -12,6 +13,9 @@ export const useSocket = () => {
   const shipper = useAppSelector(selectUser);
   const isActive = useAppSelector(selectIsActive);
   const queryClient = useQueryClient();
+
+  const { data: orders = [] } = useOrders();
+  const activeOrder = orders.length > 0 ? orders[0] : null;
 
   const connect = () => {
     const socket = new SockJS("http://localhost:8080/ws");
@@ -31,22 +35,30 @@ export const useSocket = () => {
     if (!stompClient || !shipper?.id || !isActive) {
       return;
     }
-    Geolocation.getCurrentPosition(
-      (position) => {
-        stompClient.send(
-          "/app/shipper/location",
-          {},
-          JSON.stringify({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            id: shipper?.id,
-          }),
-        );
-      },
-      (error) => console.log(error),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    );
-  }, [stompClient, shipper?.id, isActive]);
+    if (activeOrder) {
+      stompClient.send(
+        "/app/shipper/location/remove",
+        {},
+        shipper?.id.toString(),
+      );
+    } else {
+      Geolocation.getCurrentPosition(
+        (position) => {
+          stompClient.send(
+            "/app/shipper/location",
+            {},
+            JSON.stringify({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              id: shipper?.id,
+            }),
+          );
+        },
+        (error) => console.log(error),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+      );
+    }
+  }, [stompClient, shipper?.id, isActive, activeOrder]);
 
   useEffect(() => {
     if (!stompClient || !shipper?.id || !isActive) {

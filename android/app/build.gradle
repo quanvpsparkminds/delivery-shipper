@@ -79,14 +79,14 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.plate"
+    namespace "com.shipper"
     defaultConfig {
         applicationId project.env.get("BUNDLE_ID")
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode project.env.get("VERSION_CODE").toInteger()
         versionName project.env.get("VERSION_NAME")
-        resValue "string", "build_config_package", "com.plate"
+        resValue "string", "build_config_package", "com.shipper"
     }
     signingConfigs {
         debug {

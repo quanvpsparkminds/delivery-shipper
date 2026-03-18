@@ -1,5 +1,5 @@
 {
-  "name": "plate",
+  "name": "shipper",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -13,7 +13,7 @@
     "ad": "cd android && ENVFILE=.env.dev npx react-native run-android",
     "as": "cd android && ENVFILE=.env.st npx react-native run-android",
     "ap": "cd android && ENVFILE=.env.prd npx react-native run-android",
-    "id": "ENVFILE=.env.dev npx react-native run-ios --simulator \"iPhone 16 Pro Max\"",
+    "id": "ENVFILE=.env.dev RCT_METRO_PORT=9090 npx react-native run-ios --simulator \"iPhone 16\"",
     "is": "ENVFILE=.env.st npx react-native run-ios --simulator \"iPhone 15 Pro Max\"",
     "ip": "ENVFILE=.env.prd npx react-native run-ios --simulator \"iPhone 15 Pro Max\"",
     "abd": "cd android && ENVFILE=.env.dev ./gradlew bundleRelease",
