@@ -46,7 +46,7 @@ export const OrderScreen = () => {
         setRegion(newRegion);
       },
       (error) => console.log("Geolocation Error: ", error),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
     );
   }, []);
 
@@ -54,7 +54,8 @@ export const OrderScreen = () => {
     width: `${countdownWidth.value}%` as DimensionValue,
   }));
 
-  const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
+  const { mutate: updateStatus, isPending: isUpdating } =
+    useUpdateOrderStatus();
   const queryClient = useQueryClient();
 
   const handleAccept = () => {
@@ -66,7 +67,7 @@ export const OrderScreen = () => {
           queryClient.invalidateQueries({ queryKey: ["orders"] });
           setIsAccepted(true);
         },
-      }
+      },
     );
   };
 

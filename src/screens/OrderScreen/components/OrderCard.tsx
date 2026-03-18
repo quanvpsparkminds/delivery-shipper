@@ -26,7 +26,7 @@ export const OrderCard = ({
   onReject,
   onViewDetails,
 }: OrderCardProps) => {
-  const isConfirmed = order.status === "CONFIRMED";
+  const isConfirmed = order.status !== "PENDING";
 
   if (isConfirmed) {
     return (

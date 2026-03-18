@@ -27,8 +27,14 @@ export const HistoryOrderCard = ({
   return (
     <TouchableOpacity style={styles.card}>
       <View style={styles.header}>
-        <View>
-          <AppText style={styles.orderId}>{orderId}</AppText>
+        <View style={styles.leftHeader}>
+          <AppText
+            style={styles.orderId}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {orderId}
+          </AppText>
           <AppText style={styles.timeAndType}>
             {time} • {type}
           </AppText>
@@ -102,6 +108,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 12,
   },
+  leftHeader: {
+    flex: 1,
+    marginRight: 12,
+  },
   orderId: {
     fontSize: 14,
     fontWeight: "bold",
@@ -114,6 +124,8 @@ const styles = StyleSheet.create({
   },
   rightHeader: {
     alignItems: "flex-end",
+    flexShrink: 0,
+    minWidth: 80,
   },
   amount: {
     fontSize: 14,

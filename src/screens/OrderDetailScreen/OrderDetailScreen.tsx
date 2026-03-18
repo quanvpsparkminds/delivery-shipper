@@ -1,7 +1,14 @@
 import { AppText } from "components";
-import { ChevronLeft, MessageSquare, Phone } from "lucide-react-native";
+import {
+  ChevronLeft,
+  MessageSquare,
+  Phone,
+  Package,
+  Check,
+} from "lucide-react-native";
 import React from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -10,17 +17,59 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StaticScreenProps, useNavigation } from "@react-navigation/native";
+import { useUpdateOrderStatus, useOrderDetails } from "hooks";
 import { spacing, style } from "theme";
 import { DeliveryOrder, OrderItem } from "types";
+import { useLoader } from "@baont97/rn-loader";
+import { toast } from "sonner-native";
 
 type Props = StaticScreenProps<{
   order: DeliveryOrder;
 }>;
 
 export const OrderDetailScreen = ({ route }: Props) => {
-  const { order } = route.params;
+  const { data } = useOrderDetails(route.params.order.id);
+  const order = data || route.params.order;
+
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { mutate: updateOrderStatus, isPending } = useUpdateOrderStatus();
+  const loader = useLoader();
+  let buttonText = "Xác nhận";
+  let nextStatus = "";
+  let buttonColor = "#059669";
+  let ButtonIcon = Check;
+
+  if (order.status === "CONFIRMED") {
+    buttonText = "Xác nhận đã lấy hàng";
+    nextStatus = "DELIVERING";
+    buttonColor = "#ea580c";
+    ButtonIcon = Package;
+  } else if (order.status === "DELIVERING") {
+    buttonText = "Xác nhận đã giao hàng";
+    nextStatus = "COMPLETED";
+    buttonColor = "#059669";
+    ButtonIcon = Check;
+  }
+
+  const handleUpdateStatus = () => {
+    if (!nextStatus || isPending) return;
+    loader.show();
+    updateOrderStatus(
+      { id: order.id, status: nextStatus },
+      {
+        onSettled: () => {
+          loader.hide();
+        },
+        onSuccess(response) {
+          if (response.data.status === "COMPLETED") {
+            toast.success("Đơn hàng đã được giao thành công");
+            navigation.goBack();
+          }
+        },
+      },
+    );
+  };
 
   const handleBack = () => {
     navigation.goBack();
@@ -28,36 +77,7 @@ export const OrderDetailScreen = ({ route }: Props) => {
 
   return (
     <View style={[style.flex_1, { backgroundColor: "#f9fafb" }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft color="#1f2937" size={24} />
-        </TouchableOpacity>
-        <AppText style={styles.headerTitle}>Chi tiết đơn hàng</AppText>
-        <View style={{ width: 40 }} />
-      </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Status Section */}
-        <View style={styles.section}>
-          <View style={style.row_between}>
-            <View style={styles.statusBadge}>
-              <AppText style={styles.statusBadgeText}>ĐANG GIAO HÀNG</AppText>
-            </View>
-            <AppText style={styles.orderIdText}>
-              #ORD-{order.id.slice(0, 5).toUpperCase()}
-            </AppText>
-          </View>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: "70%" }]} />
-            </View>
-          </View>
-          <AppText style={styles.statusDetailText}>
-            Shipper đang di chuyển tới điểm giao (Dự kiến 8 phút nữa)
-          </AppText>
-        </View>
-
         {/* Route Section */}
         <View style={styles.section}>
           <View style={style.row}>
@@ -121,16 +141,11 @@ export const OrderDetailScreen = ({ route }: Props) => {
           <AppText style={styles.sectionTitle}>Chi tiết mặt hàng</AppText>
           {order.items.map((item: OrderItem, index: number) => (
             <View key={index} style={[style.row, style.mt_md]}>
-              <View style={styles.quantityBadge}>
-                <AppText style={styles.quantityText}>{item.id}x</AppText>
-              </View>
               <View style={[style.flex_1, style.ml_sm]}>
                 <AppText style={styles.itemName}>{item.name}</AppText>
                 <AppText style={styles.itemNote}>Thêm đá, ít đường</AppText>
               </View>
-              <AppText style={styles.itemPrice}>
-                {(item.price * 1000).toLocaleString()}đ
-              </AppText>
+              <AppText style={styles.itemPrice}>{item.price}$</AppText>
             </View>
           ))}
 
@@ -139,13 +154,13 @@ export const OrderDetailScreen = ({ route }: Props) => {
           <View style={[style.row_between, style.mt_sm]}>
             <AppText style={styles.summaryLabel}>Tạm tính</AppText>
             <AppText style={styles.summaryValue}>
-              {order.totalAmount.toLocaleString()}đ
+              {order.totalAmount.toFixed(1)}$
             </AppText>
           </View>
           <View style={[style.row_between, style.mt_xs]}>
             <AppText style={styles.summaryLabel}>Phí giao hàng</AppText>
             <AppText style={styles.summaryValue}>
-              {order.deliveryFee?.toLocaleString() || 0}đ
+              {order.deliveryFee?.toFixed(1) || 0}$
             </AppText>
           </View>
         </View>
@@ -155,7 +170,7 @@ export const OrderDetailScreen = ({ route }: Props) => {
           <View style={style.row_between}>
             <AppText style={styles.totalLabel}>Tổng thanh toán</AppText>
             <AppText style={styles.totalValue}>
-              {(order.totalAmount + (order.deliveryFee || 0)).toLocaleString()}đ
+              {(order.totalAmount + (order.deliveryFee || 0)).toFixed(1)}$
             </AppText>
           </View>
           <View style={[style.row, style.align_center, style.mt_sm]}>
@@ -166,18 +181,23 @@ export const OrderDetailScreen = ({ route }: Props) => {
       </ScrollView>
 
       {/* Footer Action */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity style={styles.confirmButton} activeOpacity={0.8}>
-          <View style={[style.row, style.align_center, style.gap_sm]}>
-            <View style={styles.checkIcon}>
-              <AppText style={{ color: "#059669", fontWeight: "bold" }}>
-                ✓
-              </AppText>
+      {nextStatus !== "" && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
+          <TouchableOpacity
+            style={[styles.confirmButton, { backgroundColor: buttonColor }]}
+            activeOpacity={0.8}
+            onPress={handleUpdateStatus}
+            disabled={isPending}
+          >
+            <View style={[style.row, style.align_center, style.gap_sm]}>
+              <View style={styles.checkIcon}>
+                <ButtonIcon color={buttonColor} size={14} strokeWidth={3} />
+              </View>
+              <AppText style={styles.confirmButtonText}>{buttonText}</AppText>
             </View>
-            <AppText style={styles.confirmButtonText}>Xác nhận đã giao</AppText>
-          </View>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };

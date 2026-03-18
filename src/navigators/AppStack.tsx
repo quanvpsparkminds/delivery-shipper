@@ -108,9 +108,6 @@ export const AppStack = createNativeStackNavigator({
     Language: LanguageScreen,
     OrderDetail: {
       screen: OrderDetailScreen,
-      options: {
-        headerShown: false,
-      },
     },
   },
 });

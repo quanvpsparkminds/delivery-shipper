@@ -1,101 +1,103 @@
+import { AppText } from "components";
 import React from "react";
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
   ScrollView,
+  StyleSheet,
+  View
 } from "react-native";
-import { AppText } from "components";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, Search } from "lucide-react-native";
-import { HistoryFilter, HistoryOrderCard } from "./components";
+import { HistoryOrderCard } from "./components";
 
-const MOCK_ORDERS = [
-  {
-    orderId: "#ORD-88291",
-    time: "14:20",
-    type: "Giao hàng nhanh",
-    amount: "+25.000đ",
-    status: "Hoàn thành" as const,
-    pickup: "Cửa hàng Phúc Long, Quận 1",
-    dropoff: "123 Lê Lợi, Phường Bến Thành, Q.1",
-  },
-  {
-    orderId: "#ORD-88285",
-    time: "11:05",
-    type: "Siêu thị",
-    amount: "0đ",
-    status: "Đã hủy" as const,
-    pickup: "WinMart+, Thảo Điền",
-    dropoff: "Chung cư Masteri T5, Quận 2",
-  },
-];
-
-const MOCK_ORDERS_YESTERDAY = [
-  {
-    orderId: "#ORD-88152",
-    time: "18:45",
-    type: "Giao đồ ăn",
-    amount: "+18.000đ",
-    status: "Hoàn thành" as const,
-    pickup: "Tiệm cơm tấm Cali, Q.10",
-    dropoff: "Hẻm 456 Sư Vạn Hạnh, Quận 10",
-  },
-];
+import { format, isToday, isYesterday } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useHistory } from "hooks/Query/Order";
+import { groupBy } from "lodash";
+import { ActivityIndicator, RefreshControl } from "react-native";
+import { DeliveryOrder } from "types";
+import { amountUtils } from "utils";
 
 export const HistoryScreen = () => {
   const insets = useSafeAreaInsets();
+  const { data: orders = [], isLoading, refetch, isRefetching } = useHistory();
+
+  const groupedOrders = groupBy(orders, (order: DeliveryOrder) =>
+    format(new Date(order.createdAt), "yyyy-MM-dd"),
+  );
+
+  const formatDateGroup = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (isToday(date))
+      return (
+        "HÔM NAY, " + format(date, "d MMMM yyyy", { locale: vi }).toUpperCase()
+      );
+    if (isYesterday(date))
+      return (
+        "HÔM QUA, " + format(date, "d MMMM yyyy", { locale: vi }).toUpperCase()
+      );
+    return format(date, "EEEE, d MMMM yyyy", { locale: vi }).toUpperCase();
+  };
+
+  const mapOrderToCardProps = (order: DeliveryOrder) => ({
+    orderId: `#ORD-${order.id.length > 10 ? order.id.split("-")[0] : order.id}`,
+    time: format(new Date(order.createdAt), "HH:mm"),
+    type: "Giao đồ ăn", // Can be dynamic if API provides order type
+    amount:
+      (order.status === "COMPLETED" ? "+" : "") +
+      amountUtils.formatMoney(order.totalAmount),
+    status: (order.status === "COMPLETED" ? "Hoàn thành" : "Đã hủy") as
+      | "Hoàn thành"
+      | "Đã hủy",
+    pickup: order.restaurantName,
+    dropoff: order.deliveryAddress,
+  });
 
   return (
     <View style={styles.container}>
       {/* Header Area */}
-      <View style={styles.headerWrapper}>
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
-            <Search color="#64748b" size={20} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Tìm kiếm mã đơn hàng..."
-              placeholderTextColor="#64748b"
-            />
-          </View>
-        </View>
-
-        {/* Filters */}
-        <HistoryFilter />
-      </View>
 
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
       >
-        {/* Today Group */}
-        <View style={styles.dateGroupHeader}>
-          <AppText style={styles.dateGroupText}>
-            HÔM NAY, 24 THÁNG 5 2024
-          </AppText>
-        </View>
+        {isLoading && !isRefetching ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#ec5b13" />
+          </View>
+        ) : orders.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <AppText style={styles.emptyText}>Chưa có lịch sử đơn hàng</AppText>
+          </View>
+        ) : (
+          Object.keys(groupedOrders)
+            .sort((a, b) => b.localeCompare(a)) // Sort dates descending
+            .map((dateStr) => (
+              <View key={dateStr}>
+                <View
+                  style={[
+                    styles.dateGroupHeader,
+                    dateStr !== Object.keys(groupedOrders)[0] &&
+                      styles.dateGroupBorder,
+                  ]}
+                >
+                  <AppText style={styles.dateGroupText}>
+                    {formatDateGroup(dateStr)}
+                  </AppText>
+                </View>
 
-        <View style={styles.cardsContainer}>
-          {MOCK_ORDERS.map((order, index) => (
-            <HistoryOrderCard key={index} {...order} />
-          ))}
-        </View>
-
-        {/* Yesterday Group */}
-        <View style={[styles.dateGroupHeader, styles.dateGroupBorder]}>
-          <AppText style={styles.dateGroupText}>
-            HÔM QUA, 23 THÁNG 5 2024
-          </AppText>
-        </View>
-
-        <View style={styles.cardsContainer}>
-          {MOCK_ORDERS_YESTERDAY.map((order, index) => (
-            <HistoryOrderCard key={index} {...order} />
-          ))}
-        </View>
+                <View style={styles.cardsContainer}>
+                  {groupedOrders[dateStr].map((order, index) => (
+                    <HistoryOrderCard
+                      key={order.id}
+                      {...mapOrderToCardProps(order)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))
+        )}
       </ScrollView>
     </View>
   );
@@ -178,5 +180,19 @@ const styles = StyleSheet.create({
   cardsContainer: {
     gap: 1,
     backgroundColor: "#f1f5f9", // the separator color
+  },
+  loadingContainer: {
+    flex: 1,
+    paddingTop: 40,
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    paddingTop: 80,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#64748b",
   },
 });

@@ -66,6 +66,7 @@ export const useSocket = () => {
     }
     stompClient?.subscribe(`/topic/delivery/${shipper?.id}`, (message: any) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["history"] });
     });
   }, [stompClient, shipper?.id, isActive]);
 };

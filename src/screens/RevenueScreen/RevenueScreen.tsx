@@ -1,11 +1,10 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { AppText } from "components";
+import React from "react";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, HelpCircle } from "lucide-react-native";
 import {
-  RevenueCard,
   RevenueBreakdown,
+  RevenueCard,
   RevenueChart,
   RevenueHistory,
 } from "./components";
