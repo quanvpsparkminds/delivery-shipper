@@ -18,13 +18,10 @@ export const generalSlice = createSlice({
     toggleActive: (state) => {
       state.isActive = !state.isActive;
     },
-    setIsActive: (state, action: PayloadAction<boolean>) => {
-      state.isActive = action.payload;
-    },
   },
 });
 
-export const { toggleActive, setIsActive } = generalSlice.actions;
+export const { toggleActive } = generalSlice.actions;
 
 export const selectIsActive = (state: RootState) => state.general.isActive;
 

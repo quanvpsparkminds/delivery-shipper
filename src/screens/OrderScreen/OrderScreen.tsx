@@ -120,7 +120,7 @@ export const OrderScreen = () => {
       {activeOrder && (
         <OrderCard
           order={activeOrder}
-          isAccepted={isAccepted || activeOrder.status === "CONFIRMED"}
+          isAccepted={activeOrder.status === "CONFIRMED"}
           loading={isUpdating}
           animatedCountdownStyle={animatedCountdownStyle}
           onAccept={handleAccept}

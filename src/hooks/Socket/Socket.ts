@@ -30,12 +30,15 @@ export const useSocket = () => {
     connect();
   }, []);
 
+  console.log(isActive);
+
   //subscribe to topic
   useEffect(() => {
-    if (!stompClient || !shipper?.id || !isActive) {
+    if (!stompClient || !shipper?.id) {
       return;
     }
-    if (activeOrder) {
+
+    if (activeOrder || !isActive) {
       stompClient.send(
         "/app/shipper/location/remove",
         {},

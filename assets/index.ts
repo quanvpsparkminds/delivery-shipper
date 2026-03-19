@@ -14,4 +14,5 @@ export const images = {
   eye: require("./eye.png"),
   logo: require("./logo.png"),
   map_bg: require("./map_bg.jpg"),
+  user_avatar: require("./user_avatar.png"),
 };
