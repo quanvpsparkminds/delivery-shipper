@@ -18,7 +18,26 @@ import { amountUtils } from "utils";
 
 export const HistoryScreen = () => {
   const insets = useSafeAreaInsets();
-  const { data: orders = [], isLoading, refetch, isRefetching } = useHistory();
+  const {
+    data,
+    isLoading,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useHistory();
+  const orders = data?.pages.flatMap((page) => page.content) || [];
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
+  };
 
   const groupedOrders = groupBy(orders, (order: DeliveryOrder) =>
     format(new Date(order.createdAt), "yyyy-MM-dd"),
@@ -61,6 +80,8 @@ export const HistoryScreen = () => {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
       >
         {isLoading && !isRefetching ? (
           <View style={styles.loadingContainer}>
@@ -97,6 +118,11 @@ export const HistoryScreen = () => {
                 </View>
               </View>
             ))
+        )}
+        {isFetchingNextPage && (
+          <View style={{ paddingVertical: 20, alignItems: "center" }}>
+            <ActivityIndicator color="#ec5b13" />
+          </View>
         )}
       </ScrollView>
     </View>

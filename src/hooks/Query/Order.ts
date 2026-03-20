@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { OrderService } from "services";
 
 export const useOrders = () => {
@@ -12,12 +12,19 @@ export const useOrders = () => {
   });
 };
 
-export const useHistory = () => {
-  return useQuery({
-    queryKey: ["history"],
-    queryFn: async () => {
-      const response = await OrderService.getHistory();
-      return response.data || [];
+export const useHistory = (size: number = 10) => {
+  return useInfiniteQuery({
+    queryKey: ["history", size],
+    queryFn: async ({ pageParam }) => {
+      const response = await OrderService.getHistory(pageParam, size);
+      return response.data;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < lastPage.totalPages - 1) {
+        return lastPage.page + 1;
+      }
+      return undefined;
     },
   });
 };
