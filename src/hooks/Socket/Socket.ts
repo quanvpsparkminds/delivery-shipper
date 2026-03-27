@@ -18,7 +18,9 @@ export const useSocket = () => {
   const activeOrder = orders.length > 0 ? orders[0] : null;
 
   const connect = () => {
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS(
+      "https://delivery-be-production-bcf0.up.railway.app/ws",
+    );
     const client = Stomp.over(socket);
     client.connect({}, () => {
       setStompClient(client);

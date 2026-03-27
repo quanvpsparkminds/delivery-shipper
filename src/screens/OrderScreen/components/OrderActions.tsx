@@ -54,20 +54,6 @@ export const OrderActions = ({
           </View>
         </TouchableOpacity>
       </View>
-
-      {/* Countdown */}
-      {!isAccepted && (
-        <View style={style.mt_sm}>
-          <View style={styles.countdownTrack}>
-            <Animated.View
-              style={[styles.countdownFill, animatedCountdownStyle]}
-            />
-          </View>
-          <AppText style={styles.countdownText}>
-            Đơn hàng sẽ hết hạn sau 45 giây
-          </AppText>
-        </View>
-      )}
     </>
   );
 };

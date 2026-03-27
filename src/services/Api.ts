@@ -15,7 +15,7 @@ import * as AxiosLogger from "axios-logger";
 const DEFAULT_TIMEOUT = 100000;
 
 const config: CreateAxiosDefaults = {
-  baseURL: `${Config.BASE_URL}/api/`,
+  baseURL: `https://delivery-be-production-bcf0.up.railway.app/api/`,
   timeout: DEFAULT_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
